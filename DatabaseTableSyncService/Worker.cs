@@ -41,9 +41,14 @@ public class Worker : BackgroundService
 
             // Get command-line arguments
             var args = Environment.GetCommandLineArgs().Skip(1).ToArray();
+            var normalizedCommand = args.Length > 0
+                ? args[0].TrimStart('-', '/')
+                : string.Empty;
 
             // If no command specified, show help
-            if (args.Length == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-h")
+            if (args.Length == 0
+                || normalizedCommand.Equals("help", StringComparison.OrdinalIgnoreCase)
+                || normalizedCommand.Equals("h", StringComparison.OrdinalIgnoreCase))
             {
                 var helpCommand = _commands.FirstOrDefault(c => c.Name == "help");
                 exitCode = helpCommand != null
@@ -53,7 +58,7 @@ public class Worker : BackgroundService
             else
             {
                 // Find and execute the command
-                var commandName = args[0];
+                var commandName = normalizedCommand;
                 var command = _commands.FirstOrDefault(c => c.Name.Equals(commandName, StringComparison.OrdinalIgnoreCase));
 
                 if (command == null)

@@ -32,12 +32,12 @@ public class MigrateCommand : ICommand
 
         for (int i = 0; i < args.Length; i++)
         {
-            if (args[i] == "--table" && i + 1 < args.Length)
+            if (IsOption(args[i], "table") && i + 1 < args.Length)
             {
-                specificTable = args[i + 1];
+                specificTable = args[i + 1].Trim();
                 i++;
             }
-            else if (args[i] == "--dry-run")
+            else if (IsOption(args[i], "dry-run"))
             {
                 dryRun = true;
             }
@@ -61,17 +61,39 @@ public class MigrateCommand : ICommand
         var tables = _configuration.GetSection("Migration:Tables")
             .Get<List<TableConfig>>() ?? new List<TableConfig>();
 
-        var enabledTables = tables.Where(t => t.Enabled).ToList();
+        List<TableConfig> tablesToMigrate;
 
-        if (enabledTables.Count == 0)
+        if (!string.IsNullOrWhiteSpace(specificTable))
+        {
+            tablesToMigrate = tables
+                .Where(t => string.Equals(
+                    $"{t.Schema}.{t.Name}",
+                    specificTable,
+                    StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (tablesToMigrate.Count == 0)
+            {
+                _logger.LogError(
+                    "Specified table '{Table}' was not found in Migration:Tables configuration",
+                    specificTable);
+                return 1;
+            }
+        }
+        else
+        {
+            tablesToMigrate = tables.Where(t => t.Enabled).ToList();
+        }
+
+        if (tablesToMigrate.Count == 0)
         {
             _logger.LogError("No tables are enabled for migration");
             return 1;
         }
 
-        _logger.LogInformation("Found {Count} enabled table(s)", enabledTables.Count);
+        _logger.LogInformation("Found {Count} table(s) to migrate", tablesToMigrate.Count);
 
-        foreach (var table in enabledTables)
+        foreach (var table in tablesToMigrate)
         {
             _logger.LogInformation("  • {Schema}.{Name} (BatchColumn: {Column})",
                 table.Schema, table.Name, table.BatchColumn);
@@ -103,4 +125,8 @@ public class MigrateCommand : ICommand
         public bool Enabled { get; set; }
         public string BatchColumn { get; set; } = string.Empty;
     }
+
+    private static bool IsOption(string value, string optionName) =>
+        value.Equals($"--{optionName}", StringComparison.OrdinalIgnoreCase)
+        || value.Equals($"-{optionName}", StringComparison.OrdinalIgnoreCase);
 }

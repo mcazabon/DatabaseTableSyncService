@@ -78,6 +78,10 @@ dotnet run -- migrate
 
 # Migrate a specific table
 dotnet run -- migrate --table dbo.Table1
+# (Runs only dbo.Table1, regardless of other enabled tables)
+
+# Single-dash syntax is also supported
+dotnet run -- -migrate -table dbo.Table1
 
 # Dry run (test without migrating)
 dotnet run -- migrate --dry-run

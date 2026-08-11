@@ -31,7 +31,7 @@ public class StatusCommand : ICommand
 
         for (int i = 0; i < args.Length; i++)
         {
-            if (args[i] == "--run-id" && i + 1 < args.Length)
+            if (IsOption(args[i], "run-id") && i + 1 < args.Length)
             {
                 if (long.TryParse(args[i + 1], out var id))
                 {
@@ -65,4 +65,8 @@ public class StatusCommand : ICommand
         await Task.CompletedTask;
         return 0;
     }
+
+    private static bool IsOption(string value, string optionName) =>
+        value.Equals($"--{optionName}", StringComparison.OrdinalIgnoreCase)
+        || value.Equals($"-{optionName}", StringComparison.OrdinalIgnoreCase);
 }

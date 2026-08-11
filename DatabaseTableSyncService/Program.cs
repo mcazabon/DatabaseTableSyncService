@@ -28,7 +28,7 @@ var host = builder.Build();
 try
 {
     await host.RunAsync();
-    return 0; // Success
+    return Environment.ExitCode;
 }
 catch (Exception ex)
 {

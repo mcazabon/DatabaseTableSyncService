@@ -28,6 +28,7 @@ dotnet run -- test-connection
 dotnet run -- migrate --dry-run
 dotnet run -- migrate
 dotnet run -- migrate --table dbo.Table1
+# (Runs only dbo.Table1)
 dotnet run -- validate
 dotnet run -- validate --table dbo.Table1
 dotnet run -- status --run-id 104
@@ -56,7 +57,7 @@ dotnet run -- list-tables
 # Step 3: Dry run to validate config
 dotnet run -- migrate --dry-run
 
-# Step 4: Validate (placeholder for now)
+# Step 4: Validate (checks connection settings + table placeholders)
 dotnet run -- validate
 ```
 
@@ -68,6 +69,9 @@ dotnet run -- test-connection
 
 # Test with one table first
 dotnet run -- migrate --table dbo.Table1
+
+# Equivalent single-dash form
+dotnet run -- -migrate -table dbo.Table1
 
 # Validate that table
 dotnet run -- validate --table dbo.Table1
@@ -107,7 +111,6 @@ dotnet run -- list-tables > tables.log
 
 ⏳ **Waiting for Phase 3:**
 - Actual data migration
-- Database connectivity
 - Status checking from database
 - Validation queries
 

@@ -1,3 +1,5 @@
+using Microsoft.Data.SqlClient;
+
 namespace DatabaseTableSyncService.Commands;
 
 /// <summary>
@@ -26,12 +28,43 @@ public class ValidateCommand : ICommand
         _logger.LogInformation("VALIDATE COMMAND");
         _logger.LogInformation("========================================");
 
+        var sourceConnectionString = _configuration.GetConnectionString("SourceDatabase");
+        var targetConnectionString = _configuration.GetConnectionString("TargetDatabase");
+
+        if (string.IsNullOrWhiteSpace(sourceConnectionString))
+        {
+            _logger.LogError("Source database connection string not configured");
+            return 1;
+        }
+
+        if (string.IsNullOrWhiteSpace(targetConnectionString))
+        {
+            _logger.LogError("Target database connection string not configured");
+            return 1;
+        }
+
+        var sourceConnectionValid = await ValidateConnectionSettingsAsync(
+            "Source",
+            sourceConnectionString,
+            cancellationToken);
+
+        var targetConnectionValid = await ValidateConnectionSettingsAsync(
+            "Target",
+            targetConnectionString,
+            cancellationToken);
+
+        if (!sourceConnectionValid || !targetConnectionValid)
+        {
+            _logger.LogError("Validation failed due to invalid or unreachable database connection settings");
+            return 1;
+        }
+
         // Parse arguments
         string? specificTable = null;
 
         for (int i = 0; i < args.Length; i++)
         {
-            if (args[i] == "--table" && i + 1 < args.Length)
+            if (IsOption(args[i], "table") && i + 1 < args.Length)
             {
                 specificTable = args[i + 1];
                 i++;
@@ -75,6 +108,49 @@ public class ValidateCommand : ICommand
         return 0;
     }
 
+    private async Task<bool> ValidateConnectionSettingsAsync(
+        string connectionName,
+        string connectionString,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var builder = new SqlConnectionStringBuilder(connectionString);
+
+            if (string.IsNullOrWhiteSpace(builder.DataSource))
+            {
+                _logger.LogError("{ConnectionName} connection string is missing server/data source", connectionName);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(builder.InitialCatalog))
+            {
+                _logger.LogError("{ConnectionName} connection string is missing database/initial catalog", connectionName);
+                return false;
+            }
+
+            await using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            return true;
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError("{ConnectionName} connection string format is invalid: {Message}", connectionName, ex.Message);
+            return false;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError("{ConnectionName} connection settings are invalid: {Message}", connectionName, ex.Message);
+            return false;
+        }
+        catch (SqlException ex)
+        {
+            _logger.LogError("{ConnectionName} database connection failed: {Message}", connectionName, ex.Message);
+            return false;
+        }
+    }
+
     private class TableConfig
     {
         public string Schema { get; set; } = string.Empty;
@@ -82,4 +158,8 @@ public class ValidateCommand : ICommand
         public bool Enabled { get; set; }
         public string BatchColumn { get; set; } = string.Empty;
     }
+
+    private static bool IsOption(string value, string optionName) =>
+        value.Equals($"--{optionName}", StringComparison.OrdinalIgnoreCase)
+        || value.Equals($"-{optionName}", StringComparison.OrdinalIgnoreCase);
 }

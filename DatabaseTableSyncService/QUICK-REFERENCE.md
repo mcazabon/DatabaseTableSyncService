@@ -26,6 +26,7 @@ dotnet run -- help
 dotnet run -- list-tables
 dotnet run -- test-connection
 dotnet run -- migrate --dry-run
+# (Validates connectivity/table compatibility without copying data)
 dotnet run -- migrate
 dotnet run -- migrate --table dbo.Table1
 # (Runs only dbo.Table1)
@@ -38,6 +39,7 @@ DatabaseTableSyncService.exe help
 DatabaseTableSyncService.exe list-tables
 DatabaseTableSyncService.exe test-connection
 DatabaseTableSyncService.exe migrate --dry-run
+# (Validates connectivity/table compatibility without copying data)
 DatabaseTableSyncService.exe migrate
 DatabaseTableSyncService.exe migrate --table dbo.Table1
 DatabaseTableSyncService.exe validate
@@ -109,17 +111,16 @@ dotnet run -- list-tables > tables.log
 - Dry-run mode works
 - Help system works
 
-⏳ **Waiting for Phase 3:**
-- Actual data migration
+⏳ **In Progress / Planned:**
 - Status checking from database
-- Validation queries
+- Enhanced validation queries
 
 ### 🚀 Next Steps
 
 1. Update `appsettings.json` with real connection strings
 2. Run `test-connection` to verify database access
-3. Phase 3: Implement actual migration logic
-4. Test with small tables first
+3. Test with one small table first (`migrate --table ... --dry-run`, then real run)
+4. Validate migrated results
 5. Run full migration
 
 ---

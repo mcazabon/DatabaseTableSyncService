@@ -70,7 +70,7 @@ Testing TARGET database connection...
 ```
 
 ### 4. **migrate** - Execute Migration
-Runs the database table migration.
+Executes table migration from source to target using key-range batching and `SqlBulkCopy`.
 
 ```powershell
 # Migrate all enabled tables

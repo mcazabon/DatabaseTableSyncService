@@ -31,6 +31,9 @@ public class Worker : BackgroundService
 
         try
         {
+            _logger.LogInformation("Executable: {Path}", Environment.ProcessPath ?? "<unknown>");
+            _logger.LogInformation("Working directory: {Path}", Environment.CurrentDirectory);
+
             // Banner
             Console.WriteLine();
             Console.WriteLine("================================================");
@@ -41,9 +44,11 @@ public class Worker : BackgroundService
 
             // Get command-line arguments
             var args = Environment.GetCommandLineArgs().Skip(1).ToArray();
+            _logger.LogDebug("Raw command line args: {Args}", string.Join(" ", args));
             var normalizedCommand = args.Length > 0
                 ? args[0].TrimStart('-', '/')
                 : string.Empty;
+            _logger.LogDebug("Normalized command: {Command}", normalizedCommand);
 
             // If no command specified, show help
             if (args.Length == 0
